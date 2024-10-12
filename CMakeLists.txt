@@ -11,4 +11,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(Qt6 6.5 REQUIRED COMPONENTS Quick Gui)
 
 add_subdirectory(LxUI)
-add_subdirectory(demo)
+
+
+option(BUILD_DEMO "Build the demo application" ON)
+
+if(BUILD_DEMO)
+    add_subdirectory(demo)
+endif()
