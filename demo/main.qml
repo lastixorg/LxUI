@@ -1,5 +1,7 @@
 import QtQuick
-import LxUI 1.0
+import LxUI.Slider 
+import LxUI.TestComponent
+
 
 Window {
 

@@ -19,7 +19,7 @@ set_target_properties(demo PROPERTIES
 )
 
 target_link_libraries(demo
-    PRIVATE Qt6::Gui Qt6::Quick LxUILibplugin )
+    PRIVATE Qt6::Gui Qt6::Quick LxUI )
 
 install(TARGETS demo
     BUNDLE DESTINATION .
