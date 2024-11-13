@@ -8,6 +8,7 @@ qt_add_qml_module(demo
     VERSION 1.0
     RESOURCE_PREFIX /lastix
     QML_FILES main.qml
+    RESOURCES Audiowide-Regular.ttf
 )
 
 set_target_properties(demo PROPERTIES
@@ -19,7 +20,7 @@ set_target_properties(demo PROPERTIES
 )
 
 target_link_libraries(demo
-    PRIVATE Qt6::Gui Qt6::Quick LxUI )
+    PRIVATE Qt6::Gui Qt6::Quick LxUI)
 
 install(TARGETS demo
     BUNDLE DESTINATION .
