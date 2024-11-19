@@ -1,12 +1,8 @@
 #pragma once
 
-#include <QFont>
 #include <QObject>
-#include <QQmlApplicationEngine>
 #include <QQmlEngine>
-
 #include <qcontainerfwd.h>
-#include <qhash.h>
 #include <qobject.h>
 #include <qqmlintegration.h>
 #include <qtmetamacros.h>
@@ -40,6 +36,7 @@ class Size : public QObject {
 
     public:
         explicit Size(QObject *parent = nullptr);
+        // Bidirectional conversion between QString and Size
         Size(QString value);
         operator QString() const {
             return m_value;
@@ -88,22 +85,28 @@ struct Defaults {
 
 struct ThemeConfig {
 
+        // Color palette
         QString white = Defaults::defaultWhite;
         QString black = Defaults::defaultBlack;
         QVariantMap colors = Defaults::defaultColors;
         QString primaryColor = Defaults::defaultPrimaryColor;
         PrimaryShade primaryShade = Defaults::defaultPrimaryShade;
+
+        // Typography
         float fontSize = 14.0;
-        QVariantMap fontSizes = {{"xs", fontSize * 0.857},
-                                 {"sm", fontSize},
-                                 {"md", fontSize * 1.143},
-                                 {"lg", fontSize * 1.286},
-                                 {"xl", fontSize * 1.571}};
+        QVariantMap fontSizes = {{Size::xs(), fontSize * 0.857},
+                                 {Size::sm(), fontSize},
+                                 {Size::md(), fontSize * 1.143},
+                                 {Size::lg(), fontSize * 1.286},
+                                 {Size::xl(), fontSize * 1.571}};
 
         QVariantMap lineHeights = Defaults::defaultLineHeights;
-        Size defaultLineHeight = Size::md();
-        QVariantMap radiusValues = Defaults::defaultRadiusValues;
+
+        // Radius
+        QVariantMap radius = Defaults::defaultRadiusValues;
         Size defaultRadius = Size::md();
+
+        // Contrast
         bool autoContrast = true;
         float luminanceThreshold = 0.3;
         ColorMode::Mode colorMode = ColorMode::Auto;
@@ -114,119 +117,168 @@ class Theme : public QObject {
         QML_SINGLETON
         QML_ELEMENT
 
+        Q_PROPERTY(bool initialized READ initialized WRITE setInitialized NOTIFY
+                       initializedChanged);
 
-        // Basic colors
+        // Color palette
         Q_PROPERTY(QString white READ white WRITE setWhite NOTIFY whiteChanged);
         Q_PROPERTY(QString black READ black WRITE setBlack NOTIFY blackChanged);
-
         Q_PROPERTY(QVariantMap colors READ colors WRITE setColors NOTIFY
                        colorsChanged);
-
-        // Primary color
         Q_PROPERTY(QString primaryColor READ primaryColor WRITE setPrimaryColor
                        NOTIFY primaryColorChanged);
         Q_PROPERTY(PrimaryShade primaryShade READ primaryShade WRITE
                        setPrimaryShade NOTIFY primaryShadeChanged);
 
-        // Fonts
-        Q_PROPERTY(int defaultFontSize READ defaultFontSize CONSTANT);
         // Typography
+        Q_PROPERTY(float fontSize READ fontSize WRITE setFontSize NOTIFY
+                       fontSizeChanged);
         Q_PROPERTY(QVariantMap fontSizes READ fontSizes WRITE setFontSizes
                        NOTIFY fontSizesChanged);
         Q_PROPERTY(QVariantMap lineHeights READ lineHeights WRITE setLineHeights
                        NOTIFY lineHeightsChanged);
+
+        // Radius
         Q_PROPERTY(QVariantMap radius READ radius WRITE setRadius NOTIFY
                        radiusChanged);
+        Q_PROPERTY(QString defaultRadius READ defaultRadius WRITE
+                       setDefaultRadius NOTIFY defaultRadiusChanged);
 
         // Contrast
         Q_PROPERTY(bool autoContrast READ autoContrast WRITE setAutoContrast
                        NOTIFY autoContrastChanged);
         Q_PROPERTY(float luminanceThreshold READ luminanceThreshold WRITE
                        setLuminanceThreshold NOTIFY luminanceThresholdChanged);
+        Q_PROPERTY(ColorMode::Mode colorMode READ colorMode WRITE setColorMode
+                       NOTIFY colorModeChanged);
 
     public:
         explicit Theme(QObject *parent = nullptr);
 
+
+        static Theme *createTheme(QQmlEngine &engine,
+                                  const ThemeConfig &config);
+
+        bool initialized() const {
+            return m_initialized;
+        }
+
+        // Color palette
         QString white() const {
             return m_white;
         }
         QString black() const {
             return m_black;
         }
-
         QVariantMap colors() const {
             return m_colors;
         }
-
         QString primaryColor() const {
             return m_primaryColor;
         }
         PrimaryShade primaryShade() const {
             return m_primaryShade;
         }
-        int defaultFontSize() const {
-            return m_defaultFontSize;
-        }
 
+        // Typography
+        float fontSize() const {
+            return m_fontSize;
+        }
         QVariantMap fontSizes() const {
             return m_fontSizes;
         }
         QVariantMap lineHeights() const {
             return m_lineHeights;
         }
+
+        // Radius
         QVariantMap radius() const {
             return m_radius;
         }
+        const QString defaultRadius() const {
+            return m_defaultRadius;
+        }
+
+        // Contrast
         bool autoContrast() const {
             return m_autoContrast;
         }
         float luminanceThreshold() const {
             return m_luminanceThreshold;
         }
-
-        static Theme *createTheme(QQmlApplicationEngine &engine,
-                                  const ThemeConfig &config);
+        ColorMode::Mode colorMode() const {
+            return m_colorMode;
+        }
 
     public slots:
+        void setInitialized(bool initialized);
+
+        // Color Palette
         void setWhite(const QString &white);
         void setBlack(const QString &black);
         void setColors(const QVariantMap &colors);
-        void setPrimaryColor(const QString &color);
-        void setPrimaryShade(const PrimaryShade &shade);
-        void setFontSizes(const QVariantMap &sizes);
-        void setLineHeights(const QVariantMap &heights);
+        void setPrimaryColor(const QString &primaryColor);
+        void setPrimaryShade(const PrimaryShade &primaryShade);
+
+        // Typography
+        void setFontSize(const float fontSize);
+        void setFontSizes(const QVariantMap &fontSizes);
+        void setLineHeights(const QVariantMap &lineHeights);
+
+        // Radius
         void setRadius(const QVariantMap &radius);
-        void setAutoContrast(bool contrast);
-        void setLuminanceThreshold(float threshold);
+        void setDefaultRadius(const Size &defaultRadius);
+
+        // Contrast
+        void setAutoContrast(bool autoContrast);
+        void setLuminanceThreshold(float luminanceThreshold);
+        void setColorMode(ColorMode::Mode colorMode);
 
     signals:
+        void initializedChanged();
+
+        // Color palette
         void whiteChanged();
         void blackChanged();
         void colorsChanged();
         void primaryColorChanged();
         void primaryShadeChanged();
 
+        // Typography
+        void fontSizeChanged();
         void fontSizesChanged();
         void lineHeightsChanged();
+
+        // Radius
         void radiusChanged();
+        void defaultRadiusChanged();
+
+        // Contrast
         void autoContrastChanged();
         void luminanceThresholdChanged();
+        void colorModeChanged();
 
     private:
-        QVariantMap m_colors;
+        bool m_initialized = false;
 
+        // Color palette
         QString m_white;
         QString m_black;
+        QVariantMap m_colors;
         QString m_primaryColor;
         PrimaryShade m_primaryShade;
-        int m_defaultFontSize;
 
+        // Typography
+        float m_fontSize;
         QVariantMap m_fontSizes;
         QVariantMap m_lineHeights;
+
+        // Radius
         QVariantMap m_radius;
+        QString m_defaultRadius;
+
+        // Contrast
         bool m_autoContrast;
         float m_luminanceThreshold;
-
-        void initializeColors();
-        void initializeDefaults();
+        ColorMode::Mode m_colorMode;
 };

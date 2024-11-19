@@ -1,14 +1,12 @@
 #include "Theme.hpp"
-#include <QDebug>
-#include <QQmlApplicationEngine>
-#include <qcontainerfwd.h>
+#include <qqmlengine.h>
+#include <qstringliteral.h>
 
 Theme::Theme(QObject *parent) : QObject(parent) {
 }
 
 
-Theme *Theme::createTheme(QQmlApplicationEngine &engine,
-                          const ThemeConfig &config) {
+Theme *Theme::createTheme(QQmlEngine &engine, const ThemeConfig &config) {
     Theme *themeSingleton = engine.singletonInstance<Theme *>("LxUI.Theme",
                                                               "Theme");
 
@@ -18,84 +16,101 @@ Theme *Theme::createTheme(QQmlApplicationEngine &engine,
     return themeSingleton;
 }
 
+void Theme::setInitialized(bool initialized) {
+    if (m_initialized != initialized) {
+        m_initialized = initialized;
+        emit initializedChanged();
+    }
+}
 
+
+// Color palette
 void Theme::setWhite(const QString &white) {
     if (m_white != white) {
         m_white = white;
         emit whiteChanged();
     }
 }
-
 void Theme::setBlack(const QString &black) {
     if (m_black != black) {
         m_black = black;
         emit blackChanged();
     }
 }
-
-void Theme::setPrimaryColor(const QString &color) {
-    if (!m_colors.contains(color)) {
-        qWarning() << "Invalid color:" << color;
-        return;
+void Theme::setColors(const QVariantMap &colors) {
+    if (m_colors != colors) {
+        m_colors = colors;
+        emit colorsChanged();
     }
-
-    if (m_primaryColor != color) {
-        m_primaryColor = color;
+}
+void Theme::setPrimaryColor(const QString &primaryColor) {
+    if (m_primaryColor != primaryColor) {
+        m_primaryColor = primaryColor;
         emit primaryColorChanged();
     }
 }
-
-void Theme::setPrimaryShade(const PrimaryShade &shade) {
-    // if (m_primaryShade != shade) {
-    //     m_primaryShade = shade;
-    //     emit primaryShadeChanged();
-    // }
+void Theme::setPrimaryShade(const PrimaryShade &primaryShade) {
+    if (m_primaryShade.light != primaryShade.light ||
+        m_primaryShade.dark != primaryShade.dark) {
+        m_primaryShade = primaryShade;
+        emit primaryShadeChanged();
+    }
 }
 
-// QString Theme::setColor(const QString &color, int shade) {
-//     if (!m_colors.contains(color)) {
-//         qWarning() << "Invalid color:" << color;
-//         return {};
-//     }
 
-//     if (shade < 0 || shade > 9) {
-//         qWarning() << "Shade must be between 0 and 9";
-//         return {};
-//     }
-
-//     return m_colors[color][shade];
-// }
-
-void Theme::setColors(const QVariantMap &colors) {
+// Typography
+void Theme::setFontSize(const float fontSize) {
+    if (m_fontSize != fontSize) {
+        m_fontSize = fontSize;
+        emit fontSizeChanged();
+    }
 }
-void Theme::setAutoContrast(bool contrast) {
-    if (m_autoContrast != contrast) {
-        m_autoContrast = contrast;
+void Theme::setFontSizes(const QVariantMap &fontSizes) {
+    if (m_fontSizes != fontSizes) {
+        m_fontSizes = fontSizes;
+        emit fontSizesChanged();
+    }
+}
+void Theme::setLineHeights(const QVariantMap &lineHeights) {
+    if (m_lineHeights != lineHeights) {
+        m_lineHeights = lineHeights;
+        emit lineHeightsChanged();
+    }
+}
+
+
+// Radius
+void Theme::setRadius(const QVariantMap &radius) {
+    if (m_radius != radius) {
+        m_radius = radius;
+        emit radiusChanged();
+    }
+}
+void Theme::setDefaultRadius(const Size &defaultRadius) {
+    if (m_defaultRadius != defaultRadius) {
+        m_defaultRadius = defaultRadius;
+        emit defaultRadiusChanged();
+    }
+}
+void Theme::setAutoContrast(bool autoContrast) {
+    if (m_autoContrast != autoContrast) {
+        m_autoContrast = autoContrast;
         emit autoContrastChanged();
     }
 }
 
-void Theme::setLuminanceThreshold(float threshold) {
-    if (!qFuzzyCompare(m_luminanceThreshold, threshold)) {
-        m_luminanceThreshold = threshold;
+
+// Contrast
+void Theme::setLuminanceThreshold(float luminanceThreshold) {
+    if (m_luminanceThreshold != luminanceThreshold) {
+        m_luminanceThreshold = luminanceThreshold;
         emit luminanceThresholdChanged();
     }
 }
 
-void Theme::setLineHeights(const QVariantMap &heights) {
-    if (m_lineHeights == heights) { return; }
-    m_lineHeights = heights;
-    emit lineHeightsChanged();
-}
-
-void Theme::setFontSizes(const QVariantMap &sizes) {
-    if (m_fontSizes == sizes) { return; }
-    m_fontSizes = sizes;
-    emit fontSizesChanged();
-}
-
-void Theme::setRadius(const QVariantMap &radius) {
-    if (m_radius == radius) { return; }
-    m_radius = radius;
-    emit radiusChanged();
+void Theme::setColorMode(ColorMode::Mode colorMode) {
+    if (m_colorMode != colorMode) {
+        m_colorMode = colorMode;
+        emit colorModeChanged();
+    }
 }
