@@ -4,52 +4,109 @@
 #include <QObject>
 #include <QQmlApplicationEngine>
 #include <QQmlEngine>
+
 #include <qcontainerfwd.h>
+#include <qhash.h>
+#include <qobject.h>
 #include <qqmlintegration.h>
 #include <qtmetamacros.h>
-#include <unordered_map>
-
-
-using ColorPalette = std::array<QString, 10>;
-using Colors = std::unordered_map<QString, ColorPalette>;
 
 
 namespace ColorMode {
     Q_NAMESPACE
     QML_ELEMENT
-    enum Mode { Light, Dark };
+    enum Mode { Light, Dark, Auto };
     Q_ENUM_NS(Mode)
 } // namespace ColorMode
 
-namespace Radius {
-    Q_NAMESPACE
-    QML_ELEMENT
-    enum Size { XS, SM, MD, LG, XL };
-    Q_ENUM_NS(Size)
-} // namespace Radius
 
 struct PrimaryShade {
         int light;
         int dark;
 };
 
+
+class Size : public QObject {
+        Q_OBJECT
+        QML_ELEMENT
+        QML_SINGLETON
+
+        Q_PROPERTY(QString xs READ xs CONSTANT);
+        Q_PROPERTY(QString sm READ sm CONSTANT);
+        Q_PROPERTY(QString md READ md CONSTANT);
+        Q_PROPERTY(QString lg READ lg CONSTANT);
+        Q_PROPERTY(QString xl READ xl CONSTANT);
+
+
+    public:
+        explicit Size(QObject *parent = nullptr);
+        Size(QString value);
+        operator QString() const {
+            return m_value;
+        }
+
+        static QString xs() {
+            return m_xs;
+        }
+
+        static QString sm() {
+            return m_sm;
+        }
+
+        static QString md() {
+            return m_md;
+        }
+
+        static QString lg() {
+            return m_lg;
+        }
+
+        static QString xl() {
+            return m_xl;
+        }
+
+    private:
+        QString m_value;
+        static QString m_xs;
+        static QString m_sm;
+        static QString m_md;
+        static QString m_lg;
+        static QString m_xl;
+};
+
+
+struct Defaults {
+        static QString defaultWhite;
+        static QString defaultBlack;
+        static QString defaultPrimaryColor;
+        static PrimaryShade defaultPrimaryShade;
+        static QVariantMap defaultColors;
+        static QVariantMap defaultLineHeights;
+        static QVariantMap defaultRadiusValues;
+};
+
+
 struct ThemeConfig {
-        QString white;
-        QString black;
-        // Colors colors;
-        QString primaryColor;
-        PrimaryShade primaryShade;
 
-        double fontSize;
-        QVariantMap headings;
-        QVariantMap fontSizes;
-        QVariantMap lineHeights;
-        QVariantMap radius;
+        QString white = Defaults::defaultWhite;
+        QString black = Defaults::defaultBlack;
+        QVariantMap colors = Defaults::defaultColors;
+        QString primaryColor = Defaults::defaultPrimaryColor;
+        PrimaryShade primaryShade = Defaults::defaultPrimaryShade;
+        float fontSize = 14.0;
+        QVariantMap fontSizes = {{"xs", fontSize * 0.857},
+                                 {"sm", fontSize},
+                                 {"md", fontSize * 1.143},
+                                 {"lg", fontSize * 1.286},
+                                 {"xl", fontSize * 1.571}};
 
-
-        bool autoContrast;
-        double luminanceThreshold;
-        ColorMode::Mode colorMode;
+        QVariantMap lineHeights = Defaults::defaultLineHeights;
+        Size defaultLineHeight = Size::md();
+        QVariantMap radiusValues = Defaults::defaultRadiusValues;
+        Size defaultRadius = Size::md();
+        bool autoContrast = true;
+        float luminanceThreshold = 0.3;
+        ColorMode::Mode colorMode = ColorMode::Auto;
 };
 
 class Theme : public QObject {
@@ -57,12 +114,13 @@ class Theme : public QObject {
         QML_SINGLETON
         QML_ELEMENT
 
+
         // Basic colors
         Q_PROPERTY(QString white READ white WRITE setWhite NOTIFY whiteChanged);
         Q_PROPERTY(QString black READ black WRITE setBlack NOTIFY blackChanged);
 
-        // Q_PROPERTY(
-        // Colors colors READ colors WRITE setColors NOTIFY colorsChanged);
+        Q_PROPERTY(QVariantMap colors READ colors WRITE setColors NOTIFY
+                       colorsChanged);
 
         // Primary color
         Q_PROPERTY(QString primaryColor READ primaryColor WRITE setPrimaryColor
@@ -72,10 +130,7 @@ class Theme : public QObject {
 
         // Fonts
         Q_PROPERTY(int defaultFontSize READ defaultFontSize CONSTANT);
-
         // Typography
-        Q_PROPERTY(QVariantMap headings READ headings WRITE setHeadings NOTIFY
-                       headingsChanged);
         Q_PROPERTY(QVariantMap fontSizes READ fontSizes WRITE setFontSizes
                        NOTIFY fontSizesChanged);
         Q_PROPERTY(QVariantMap lineHeights READ lineHeights WRITE setLineHeights
@@ -86,7 +141,7 @@ class Theme : public QObject {
         // Contrast
         Q_PROPERTY(bool autoContrast READ autoContrast WRITE setAutoContrast
                        NOTIFY autoContrastChanged);
-        Q_PROPERTY(double luminanceThreshold READ luminanceThreshold WRITE
+        Q_PROPERTY(float luminanceThreshold READ luminanceThreshold WRITE
                        setLuminanceThreshold NOTIFY luminanceThresholdChanged);
 
     public:
@@ -98,6 +153,11 @@ class Theme : public QObject {
         QString black() const {
             return m_black;
         }
+
+        QVariantMap colors() const {
+            return m_colors;
+        }
+
         QString primaryColor() const {
             return m_primaryColor;
         }
@@ -107,9 +167,7 @@ class Theme : public QObject {
         int defaultFontSize() const {
             return m_defaultFontSize;
         }
-        QVariantMap headings() const {
-            return m_headings;
-        }
+
         QVariantMap fontSizes() const {
             return m_fontSizes;
         }
@@ -122,7 +180,7 @@ class Theme : public QObject {
         bool autoContrast() const {
             return m_autoContrast;
         }
-        double luminanceThreshold() const {
+        float luminanceThreshold() const {
             return m_luminanceThreshold;
         }
 
@@ -132,22 +190,22 @@ class Theme : public QObject {
     public slots:
         void setWhite(const QString &white);
         void setBlack(const QString &black);
+        void setColors(const QVariantMap &colors);
         void setPrimaryColor(const QString &color);
         void setPrimaryShade(const PrimaryShade &shade);
-        void setHeadings(const QVariantMap &headings);
         void setFontSizes(const QVariantMap &sizes);
         void setLineHeights(const QVariantMap &heights);
         void setRadius(const QVariantMap &radius);
         void setAutoContrast(bool contrast);
-        void setLuminanceThreshold(double threshold);
-        QString setColor(const QString &color, int shade);
+        void setLuminanceThreshold(float threshold);
 
     signals:
         void whiteChanged();
         void blackChanged();
+        void colorsChanged();
         void primaryColorChanged();
         void primaryShadeChanged();
-        void headingsChanged();
+
         void fontSizesChanged();
         void lineHeightsChanged();
         void radiusChanged();
@@ -155,19 +213,19 @@ class Theme : public QObject {
         void luminanceThresholdChanged();
 
     private:
-        Colors m_colors;
+        QVariantMap m_colors;
 
-        QString m_white{"#ffffff"};
-        QString m_black{"#000000"};
-        QString m_primaryColor{"blue"};
+        QString m_white;
+        QString m_black;
+        QString m_primaryColor;
         PrimaryShade m_primaryShade;
-        int m_defaultFontSize{14};
-        QVariantMap m_headings;
+        int m_defaultFontSize;
+
         QVariantMap m_fontSizes;
         QVariantMap m_lineHeights;
         QVariantMap m_radius;
-        bool m_autoContrast{false};
-        double m_luminanceThreshold{0.3};
+        bool m_autoContrast;
+        float m_luminanceThreshold;
 
         void initializeColors();
         void initializeDefaults();

@@ -6,9 +6,11 @@ qt_add_qml_module(LxUITheme STATIC
     SOURCES 
         Theme.cpp 
         Theme.hpp
+        Defaults.cpp
     DEPENDENCIES
         QtGui
         QtQuick
+        QtCore
 )
 
 
