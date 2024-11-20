@@ -1,6 +1,25 @@
 #include "Theme.hpp"
 
 Theme::Theme(QObject *parent, const ThemeConfig &config) : QObject(parent) {
+    // Color palette
+    setWhite(config.white);
+    setBlack(config.black);
+    setColors(config.colors);
+    setPrimaryColor(config.primaryColor);
+    setPrimaryShade(config.primaryShade);
+
+    // Typography
+    setFontSize(config.fontSize);
+    setFontSizes(config.fontSizes);
+    setLineHeights(config.lineHeights);
+
+    // Radius
+    setRadius(config.radius);
+    setDefaultRadius(config.defaultRadius);
+
+    // Contrast
+    setAutoContrast(config.autoContrast);
+    setLuminanceThreshold(config.luminanceThreshold);
 }
 
 
@@ -72,15 +91,15 @@ void Theme::setDefaultRadius(const Size &defaultRadius) {
         emit defaultRadiusChanged();
     }
 }
+
+
+// Contrast
 void Theme::setAutoContrast(bool autoContrast) {
     if (m_autoContrast != autoContrast) {
         m_autoContrast = autoContrast;
         emit autoContrastChanged();
     }
 }
-
-
-// Contrast
 void Theme::setLuminanceThreshold(float luminanceThreshold) {
     if (m_luminanceThreshold != luminanceThreshold) {
         m_luminanceThreshold = luminanceThreshold;

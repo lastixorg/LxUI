@@ -269,25 +269,39 @@ class Theme : public QObject {
         ColorMode::Mode m_colorMode;
 };
 
-struct ThemeForeign {
+struct ThemeProvider {
         Q_GADGET
         QML_FOREIGN(Theme)
         QML_SINGLETON
         QML_NAMED_ELEMENT(Theme)
     public:
-        inline static Theme *s_instance = nullptr;
+        static Theme *instance() {
+            if (!s_instance) qFatal("Theme not initialized!");
+
+            return s_instance;
+        }
+
+        static Theme *init(const ThemeConfig &config,
+                           QObject *parent = nullptr) {
+            if (s_instance) qFatal("Theme already initialized!");
+            s_instance = new Theme(parent, config);
+
+            return s_instance;
+        }
 
         static Theme *create(QQmlEngine *, QJSEngine *engine) {
-            Q_ASSERT(s_instance);
+            auto instance = ThemeProvider::instance();
+
             Q_ASSERT(engine->thread() == s_instance->thread());
 
             if (s_engine) Q_ASSERT(engine == s_engine);
             else s_engine = engine;
 
             QJSEngine::setObjectOwnership(s_instance, QJSEngine::CppOwnership);
-            return s_instance;
+            return instance;
         }
 
     private:
+        inline static Theme *s_instance = nullptr;
         inline static QJSEngine *s_engine = nullptr;
 };
