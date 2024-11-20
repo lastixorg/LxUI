@@ -1,26 +1,6 @@
 #include "Theme.hpp"
-#include <qqmlengine.h>
-#include <qstringliteral.h>
 
-Theme::Theme(QObject *parent) : QObject(parent) {
-}
-
-
-Theme *Theme::createTheme(QQmlEngine &engine, const ThemeConfig &config) {
-    Theme *themeSingleton = engine.singletonInstance<Theme *>("LxUI.Theme",
-                                                              "Theme");
-
-    // TODO: make config override defaults
-    // themeSingleton->setWhite(config.white);
-
-    return themeSingleton;
-}
-
-void Theme::setInitialized(bool initialized) {
-    if (m_initialized != initialized) {
-        m_initialized = initialized;
-        emit initializedChanged();
-    }
+Theme::Theme(QObject *parent, const ThemeConfig &config) : QObject(parent) {
 }
 
 

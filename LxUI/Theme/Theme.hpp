@@ -2,7 +2,9 @@
 
 #include <QObject>
 #include <QQmlEngine>
+#include <qassert.h>
 #include <qcontainerfwd.h>
+#include <qjsengine.h>
 #include <qobject.h>
 #include <qqmlintegration.h>
 #include <qtmetamacros.h>
@@ -114,11 +116,6 @@ struct ThemeConfig {
 
 class Theme : public QObject {
         Q_OBJECT
-        QML_SINGLETON
-        QML_ELEMENT
-
-        Q_PROPERTY(bool initialized READ initialized WRITE setInitialized NOTIFY
-                       initializedChanged);
 
         // Color palette
         Q_PROPERTY(QString white READ white WRITE setWhite NOTIFY whiteChanged);
@@ -153,15 +150,8 @@ class Theme : public QObject {
                        NOTIFY colorModeChanged);
 
     public:
-        explicit Theme(QObject *parent = nullptr);
-
-
-        static Theme *createTheme(QQmlEngine &engine,
-                                  const ThemeConfig &config);
-
-        bool initialized() const {
-            return m_initialized;
-        }
+        explicit Theme(QObject *parent = nullptr,
+                       const ThemeConfig &config = ThemeConfig{});
 
         // Color palette
         QString white() const {
@@ -211,7 +201,6 @@ class Theme : public QObject {
         }
 
     public slots:
-        void setInitialized(bool initialized);
 
         // Color Palette
         void setWhite(const QString &white);
@@ -235,7 +224,6 @@ class Theme : public QObject {
         void setColorMode(ColorMode::Mode colorMode);
 
     signals:
-        void initializedChanged();
 
         // Color palette
         void whiteChanged();
@@ -259,8 +247,6 @@ class Theme : public QObject {
         void colorModeChanged();
 
     private:
-        bool m_initialized = false;
-
         // Color palette
         QString m_white;
         QString m_black;
@@ -281,4 +267,27 @@ class Theme : public QObject {
         bool m_autoContrast;
         float m_luminanceThreshold;
         ColorMode::Mode m_colorMode;
+};
+
+struct ThemeForeign {
+        Q_GADGET
+        QML_FOREIGN(Theme)
+        QML_SINGLETON
+        QML_NAMED_ELEMENT(Theme)
+    public:
+        inline static Theme *s_instance = nullptr;
+
+        static Theme *create(QQmlEngine *, QJSEngine *engine) {
+            Q_ASSERT(s_instance);
+            Q_ASSERT(engine->thread() == s_instance->thread());
+
+            if (s_engine) Q_ASSERT(engine == s_engine);
+            else s_engine = engine;
+
+            QJSEngine::setObjectOwnership(s_instance, QJSEngine::CppOwnership);
+            return s_instance;
+        }
+
+    private:
+        inline static QJSEngine *s_engine = nullptr;
 };
