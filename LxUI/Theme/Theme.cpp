@@ -43,13 +43,69 @@ void Theme::setBlack(const QString &black) {
     }
 }
 void Theme::setColors(const QVariantMap &colors) {
-    if (m_config.colors != colors) {
-        m_config.colors.insert(colors);
-        emit colorsChanged();
+    QVariantMap newColors = m_config.colors;
+    bool isValid = true;
+
+    for (auto it = colors.constBegin(); it != colors.constEnd(); ++it) {
+        const QString &key = it.key();
+        const QVariant &value = it.value();
+
+        if (!value.canConvert<QStringList>()) {
+            qWarning() << "Colors: Value for key" << key
+                       << "is not a QStringList.";
+            isValid = false;
+            continue;
+        }
+
+        QStringList colorList = value.toStringList();
+        int numColors = colorList.size();
+
+
+        if (numColors < 1 || numColors > 10) {
+            qWarning() << "Colors: QStringList for key" << key
+                       << "must contain between 1 and 10 colors (found"
+                       << numColors << ").";
+            isValid = false;
+            continue;
+        }
+
+
+        bool colorListValid = true;
+        for (const QString &colorString : colorList) {
+            QColor color(colorString);
+            if (!color.isValid()) {
+                qWarning() << "Colors: Invalid color" << colorString
+                           << "for key" << key << ".";
+                colorListValid = false;
+                break;
+            }
+        }
+
+        if (!colorListValid) {
+            isValid = false;
+            continue;
+        }
+
+        newColors.insert(key, colorList);
+    }
+
+    if (isValid) {
+        if (m_config.colors != newColors) {
+            m_config.colors = newColors;
+            emit colorsChanged();
+        }
+    } else {
+        qWarning() << "Colors were not set due to validation errors.";
     }
 }
+
 void Theme::setPrimaryColor(const QString &primaryColor) {
     if (m_config.primaryColor != primaryColor) {
+        if (!m_config.colors.contains(primaryColor)) {
+            qWarning() << "Invalid primaryColor:" << primaryColor
+                       << "- it is not a key in the colors map.";
+            return;
+        }
         m_config.primaryColor = primaryColor;
         emit primaryColorChanged();
     }

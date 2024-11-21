@@ -8,7 +8,7 @@
 #include <qobject.h>
 #include <qqmlintegration.h>
 #include <qtmetamacros.h>
-
+#include <QColor>
 
 namespace ColorMode {
     Q_NAMESPACE
