@@ -23,7 +23,6 @@ struct PrimaryShade {
         int dark;
 };
 
-
 class Size : public QObject {
         Q_OBJECT
         QML_ELEMENT
@@ -148,7 +147,7 @@ class Theme : public QObject {
 
     public:
         explicit Theme(QObject *parent, const ThemeConfig &config);
-
+        explicit Theme(QObject *parent);
         // Color palette
         QString white() const {
             return m_config.white;
@@ -243,7 +242,7 @@ class Theme : public QObject {
         void colorModeChanged();
 
     private:
-        ThemeConfig m_config;
+        ThemeConfig m_config{};
 };
 
 struct ThemeProvider {
@@ -257,14 +256,12 @@ struct ThemeProvider {
 
             return s_instance;
         }
+        static Theme *init(QObject *parent, const ThemeConfig &config) {
+            return creator(parent, &config);
+        }
 
-        static Theme *init(const ThemeConfig &config,
-                           QObject *parent = nullptr) {
-
-            if (s_instance) qFatal("Theme already initialized!");
-            s_instance = new Theme(parent, config);
-
-            return s_instance;
+        static Theme *init(QObject *parent) {
+            return creator(parent, nullptr);
         }
 
         static Theme *create(QQmlEngine *, QJSEngine *engine) {
@@ -280,6 +277,13 @@ struct ThemeProvider {
         }
 
     private:
+        static Theme *creator(QObject *parent, const ThemeConfig *config) {
+            if (s_instance) qFatal("Theme already initialized!");
+            s_instance = config ? new Theme(parent, *config) :
+                                  new Theme(parent);
+            return s_instance;
+        }
+
         inline static Theme *s_instance = nullptr;
         inline static QJSEngine *s_engine = nullptr;
 };

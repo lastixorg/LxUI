@@ -1,8 +1,7 @@
 #include "Theme.hpp"
 
 
-Theme::Theme(QObject *parent, const ThemeConfig &config)
-    : QObject(parent), m_config(ThemeConfig{}) {
+Theme::Theme(QObject *parent, const ThemeConfig &config) : QObject(parent) {
 
     // Color palette
     setWhite(config.white);
@@ -25,6 +24,8 @@ Theme::Theme(QObject *parent, const ThemeConfig &config)
     // Contrast
     setAutoContrast(config.autoContrast);
     setLuminanceThreshold(config.luminanceThreshold);
+}
+Theme::Theme(QObject *parent) : QObject(parent) {
 }
 
 
