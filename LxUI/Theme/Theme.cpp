@@ -44,41 +44,46 @@ void Theme::setBlack(const QString &black) {
 }
 void Theme::setColors(const QVariantMap &colors) {
     QVariantMap newColors = m_config.colors;
+
     bool isValid = true;
-
     for (auto it = colors.constBegin(); it != colors.constEnd(); ++it) {
-        const QString &key = it.key();
-        const QVariant &value = it.value();
-
-        if (!value.canConvert<QStringList>()) {
-            qWarning() << "Colors: Value for key" << key
-                       << "is not a QStringList.";
+        if (!it.value().canConvert<QVariantList>()) {
+            qWarning() << "Colors: Value for key" << it.key()
+                       << "is not a QVariantList.";
             isValid = false;
             continue;
         }
 
-        QStringList colorList = value.toStringList();
-        int numColors = colorList.size();
-
+        const auto colorList = it.value().toList();
+        const auto numColors = colorList.size();
 
         if (numColors < 1 || numColors > 10) {
-            qWarning() << "Colors: QStringList for key" << key
+            qWarning() << "Colors: QVariantList for key" << it.key()
                        << "must contain between 1 and 10 colors (found"
                        << numColors << ").";
             isValid = false;
             continue;
         }
 
-
+        QVariantList validatedColors;
         bool colorListValid = true;
-        for (const QString &colorString : colorList) {
-            QColor color(colorString);
+
+        for (const auto &colorVariant : colorList) {
+            QColor color;
+
+            if (colorVariant.canConvert<QColor>()) {
+                color = colorVariant.value<QColor>();
+            } else if (colorVariant.canConvert<QString>()) {
+                color = QColor(colorVariant.toString());
+            }
+
             if (!color.isValid()) {
-                qWarning() << "Colors: Invalid color" << colorString
-                           << "for key" << key << ".";
+                qWarning() << "Colors: Invalid color in list for key"
+                           << it.key();
                 colorListValid = false;
                 break;
             }
+            validatedColors.append(QVariant::fromValue(color));
         }
 
         if (!colorListValid) {
@@ -86,7 +91,7 @@ void Theme::setColors(const QVariantMap &colors) {
             continue;
         }
 
-        newColors.insert(key, colorList);
+        newColors.insert(it.key(), validatedColors);
     }
 
     if (isValid) {
@@ -98,6 +103,7 @@ void Theme::setColors(const QVariantMap &colors) {
         qWarning() << "Colors were not set due to validation errors.";
     }
 }
+
 
 void Theme::setPrimaryColor(const QString &primaryColor) {
     if (m_config.primaryColor != primaryColor) {
