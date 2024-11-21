@@ -73,7 +73,6 @@ class Size : public QObject {
         static QString m_xl;
 };
 
-
 struct Defaults {
         static QString defaultWhite;
         static QString defaultBlack;
@@ -86,7 +85,6 @@ struct Defaults {
 
 
 struct ThemeConfig {
-
         // Color palette
         QString white = Defaults::defaultWhite;
         QString black = Defaults::defaultBlack;
@@ -101,12 +99,11 @@ struct ThemeConfig {
                                  {Size::md(), fontSize * 1.143},
                                  {Size::lg(), fontSize * 1.286},
                                  {Size::xl(), fontSize * 1.571}};
-
         QVariantMap lineHeights = Defaults::defaultLineHeights;
 
         // Radius
         QVariantMap radius = Defaults::defaultRadiusValues;
-        Size defaultRadius = Size::md();
+        QString defaultRadius = Size::md();
 
         // Contrast
         bool autoContrast = true;
@@ -150,54 +147,53 @@ class Theme : public QObject {
                        NOTIFY colorModeChanged);
 
     public:
-        explicit Theme(QObject *parent = nullptr,
-                       const ThemeConfig &config = ThemeConfig{});
+        explicit Theme(QObject *parent, const ThemeConfig &config);
 
         // Color palette
         QString white() const {
-            return m_white;
+            return m_config.white;
         }
         QString black() const {
-            return m_black;
+            return m_config.black;
         }
         QVariantMap colors() const {
-            return m_colors;
+            return m_config.colors;
         }
         QString primaryColor() const {
-            return m_primaryColor;
+            return m_config.primaryColor;
         }
         PrimaryShade primaryShade() const {
-            return m_primaryShade;
+            return m_config.primaryShade;
         }
 
         // Typography
         float fontSize() const {
-            return m_fontSize;
+            return m_config.fontSize;
         }
         QVariantMap fontSizes() const {
-            return m_fontSizes;
+            return m_config.fontSizes;
         }
         QVariantMap lineHeights() const {
-            return m_lineHeights;
+            return m_config.lineHeights;
         }
 
         // Radius
         QVariantMap radius() const {
-            return m_radius;
+            return m_config.radius;
         }
-        const QString defaultRadius() const {
-            return m_defaultRadius;
+        QString defaultRadius() const {
+            return m_config.defaultRadius;
         }
 
         // Contrast
         bool autoContrast() const {
-            return m_autoContrast;
+            return m_config.autoContrast;
         }
         float luminanceThreshold() const {
-            return m_luminanceThreshold;
+            return m_config.luminanceThreshold;
         }
         ColorMode::Mode colorMode() const {
-            return m_colorMode;
+            return m_config.colorMode;
         }
 
     public slots:
@@ -247,26 +243,7 @@ class Theme : public QObject {
         void colorModeChanged();
 
     private:
-        // Color palette
-        QString m_white;
-        QString m_black;
-        QVariantMap m_colors;
-        QString m_primaryColor;
-        PrimaryShade m_primaryShade;
-
-        // Typography
-        float m_fontSize;
-        QVariantMap m_fontSizes;
-        QVariantMap m_lineHeights;
-
-        // Radius
-        QVariantMap m_radius;
-        QString m_defaultRadius;
-
-        // Contrast
-        bool m_autoContrast;
-        float m_luminanceThreshold;
-        ColorMode::Mode m_colorMode;
+        ThemeConfig m_config;
 };
 
 struct ThemeProvider {
@@ -283,6 +260,7 @@ struct ThemeProvider {
 
         static Theme *init(const ThemeConfig &config,
                            QObject *parent = nullptr) {
+
             if (s_instance) qFatal("Theme already initialized!");
             s_instance = new Theme(parent, config);
 
