@@ -20,7 +20,7 @@ QString Size::m_xl = "xl";
 QString Defaults::defaultWhite = "#ffffff";
 QString Defaults::defaultBlack = "#000000";
 QString Defaults::defaultPrimaryColor = "blue";
-PrimaryShade Defaults::defaultPrimaryShade = {.light = 8, .dark = 6};
+PrimaryShade Defaults::defaultPrimaryShade = PrimaryShade();
 
 QVariantMap Defaults::defaultColors = {
     {"dark",

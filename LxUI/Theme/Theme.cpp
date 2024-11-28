@@ -118,8 +118,8 @@ void Theme::setPrimaryColor(const QString &primaryColor) {
     }
 }
 void Theme::setPrimaryShade(const PrimaryShade &primaryShade) {
-    if (m_config.primaryShade.light != primaryShade.light ||
-        m_config.primaryShade.dark != primaryShade.dark) {
+    if (m_config.primaryShade.light() != primaryShade.light() ||
+        m_config.primaryShade.dark() != primaryShade.dark()) {
         m_config.primaryShade = primaryShade;
         emit primaryShadeChanged();
     }

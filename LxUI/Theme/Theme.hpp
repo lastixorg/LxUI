@@ -17,10 +17,26 @@ namespace ColorMode {
     Q_ENUM_NS(Mode)
 } // namespace ColorMode
 
+class PrimaryShade {
+        Q_GADGET
 
-struct PrimaryShade {
-        int light;
-        int dark;
+        Q_PROPERTY(int light READ light);
+        Q_PROPERTY(int dark READ dark);
+        QML_VALUE_TYPE(primaryShade)
+    public:
+        PrimaryShade() : m_light(8), m_dark(4){};
+        explicit PrimaryShade(int l, int d) : m_light(l), m_dark(d){};
+
+        int light() const {
+            return m_light;
+        }
+        int dark() const {
+            return m_dark;
+        }
+
+    private:
+        int m_light;
+        int m_dark;
 };
 
 class Size : public QObject {
