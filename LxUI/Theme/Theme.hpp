@@ -1,21 +1,20 @@
 #pragma once
 
+// TODO: remove unnecessary includes
 #include <QObject>
 #include <QQmlEngine>
 #include <qassert.h>
 #include <qcontainerfwd.h>
 #include <qjsengine.h>
+#include <qnamespace.h>
 #include <qobject.h>
 #include <qqmlintegration.h>
+#include <qstylehints.h>
 #include <qtmetamacros.h>
 #include <QColor>
+#include <QStyleHints>
+#include <QGuiApplication>
 
-namespace ColorMode {
-    Q_NAMESPACE
-    QML_ELEMENT
-    enum Mode { Light, Dark, Auto };
-    Q_ENUM_NS(Mode)
-} // namespace ColorMode
 
 class PrimaryShade {
         Q_GADGET
@@ -24,7 +23,7 @@ class PrimaryShade {
         Q_PROPERTY(int dark READ dark);
         QML_VALUE_TYPE(primaryShade)
     public:
-        PrimaryShade() : m_light(8), m_dark(4){};
+        PrimaryShade() : m_light(6), m_dark(8){};
         explicit PrimaryShade(int l, int d) : m_light(l), m_dark(d){};
 
         int light() const {
@@ -38,6 +37,7 @@ class PrimaryShade {
         int m_light;
         int m_dark;
 };
+
 
 class Size : public QObject {
         Q_OBJECT
@@ -96,6 +96,7 @@ struct Defaults {
         static QVariantMap defaultColors;
         static QVariantMap defaultLineHeights;
         static QVariantMap defaultRadiusValues;
+        static Qt::ColorScheme defaultColorScheme;
 };
 
 
@@ -123,7 +124,7 @@ struct ThemeConfig {
         // Contrast
         bool autoContrast = true;
         float luminanceThreshold = 0.3;
-        ColorMode::Mode colorMode = ColorMode::Auto;
+        Qt::ColorScheme colorScheme = Defaults::defaultColorScheme;
 };
 
 class Theme : public QObject {
@@ -158,8 +159,8 @@ class Theme : public QObject {
                        NOTIFY autoContrastChanged);
         Q_PROPERTY(float luminanceThreshold READ luminanceThreshold WRITE
                        setLuminanceThreshold NOTIFY luminanceThresholdChanged);
-        Q_PROPERTY(ColorMode::Mode colorMode READ colorMode WRITE setColorMode
-                       NOTIFY colorModeChanged);
+        Q_PROPERTY(Qt::ColorScheme colorScheme READ colorScheme WRITE
+                       setColorScheme NOTIFY colorSchemeChanged);
 
     public:
         explicit Theme(QObject *parent, const ThemeConfig &config);
@@ -207,8 +208,8 @@ class Theme : public QObject {
         float luminanceThreshold() const {
             return m_config.luminanceThreshold;
         }
-        ColorMode::Mode colorMode() const {
-            return m_config.colorMode;
+        Qt::ColorScheme colorScheme() const {
+            return m_config.colorScheme;
         }
 
     public slots:
@@ -232,7 +233,7 @@ class Theme : public QObject {
         // Contrast
         void setAutoContrast(bool autoContrast);
         void setLuminanceThreshold(float luminanceThreshold);
-        void setColorMode(ColorMode::Mode colorMode);
+        void setColorScheme(Qt::ColorScheme colorScheme);
 
     signals:
 
@@ -255,7 +256,7 @@ class Theme : public QObject {
         // Contrast
         void autoContrastChanged();
         void luminanceThresholdChanged();
-        void colorModeChanged();
+        void colorSchemeChanged();
 
     private:
         ThemeConfig m_config{};

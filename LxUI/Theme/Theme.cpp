@@ -1,13 +1,10 @@
 #include "Theme.hpp"
 
-
-Theme::Theme(QObject *parent, const ThemeConfig &config) : QObject(parent) {
+Theme::Theme(QObject *parent, const ThemeConfig &config) : Theme(parent) {
 
     // Color palette
     setWhite(config.white);
     setBlack(config.black);
-
-    // m_colors = Defaults::defaultColors;
     setColors(config.colors);
     setPrimaryColor(config.primaryColor);
     setPrimaryShade(config.primaryShade);
@@ -25,7 +22,16 @@ Theme::Theme(QObject *parent, const ThemeConfig &config) : QObject(parent) {
     setAutoContrast(config.autoContrast);
     setLuminanceThreshold(config.luminanceThreshold);
 }
+
 Theme::Theme(QObject *parent) : QObject(parent) {
+    connect(qApp->styleHints(), &QStyleHints::colorSchemeChanged, this,
+            [this]() {
+                if (auto newScheme = qApp->styleHints()->colorScheme();
+                    newScheme != Qt::ColorScheme::Unknown)
+                    m_config.colorScheme = newScheme;
+
+                emit colorSchemeChanged();
+            });
 }
 
 
@@ -176,9 +182,10 @@ void Theme::setLuminanceThreshold(float luminanceThreshold) {
     }
 }
 
-void Theme::setColorMode(ColorMode::Mode colorMode) {
-    if (m_config.colorMode != colorMode) {
-        m_config.colorMode = colorMode;
-        emit colorModeChanged();
+void Theme::setColorScheme(Qt::ColorScheme colorScheme) {
+    if (m_config.colorScheme != colorScheme &&
+        colorScheme != Qt::ColorScheme::Unknown) {
+        m_config.colorScheme = colorScheme;
+        emit colorSchemeChanged();
     }
 }
