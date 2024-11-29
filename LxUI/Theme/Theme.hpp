@@ -96,7 +96,6 @@ struct Defaults {
         static QVariantMap defaultColors;
         static QVariantMap defaultLineHeights;
         static QVariantMap defaultRadiusValues;
-        static Qt::ColorScheme defaultColorScheme;
 };
 
 
@@ -124,7 +123,8 @@ struct ThemeConfig {
         // Contrast
         bool autoContrast = true;
         float luminanceThreshold = 0.3;
-        Qt::ColorScheme colorScheme = Defaults::defaultColorScheme;
+        Qt::ColorScheme colorScheme =
+            Qt::ColorScheme::Unknown; // Unknown for system theme
 };
 
 class Theme : public QObject {
@@ -209,8 +209,17 @@ class Theme : public QObject {
             return m_config.luminanceThreshold;
         }
         Qt::ColorScheme colorScheme() const {
-            return m_config.colorScheme;
+            if (m_config.colorScheme != Qt::ColorScheme::Unknown) {
+                return m_config.colorScheme;
+            } else {
+                // Use system color scheme or default to Light if unknown
+                if (auto systemScheme = qApp->styleHints()->colorScheme();
+                    systemScheme != Qt::ColorScheme::Unknown)
+                    return systemScheme;
+                return Qt::ColorScheme::Light;
+            }
         }
+
 
     public slots:
 

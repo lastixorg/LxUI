@@ -1,7 +1,6 @@
 #include "Theme.hpp"
 
 Theme::Theme(QObject *parent, const ThemeConfig &config) : Theme(parent) {
-
     // Color palette
     setWhite(config.white);
     setBlack(config.black);
@@ -21,16 +20,16 @@ Theme::Theme(QObject *parent, const ThemeConfig &config) : Theme(parent) {
     // Contrast
     setAutoContrast(config.autoContrast);
     setLuminanceThreshold(config.luminanceThreshold);
+    setColorScheme(config.colorScheme);
 }
 
 Theme::Theme(QObject *parent) : QObject(parent) {
+    // System scheme listener
     connect(qApp->styleHints(), &QStyleHints::colorSchemeChanged, this,
             [this]() {
-                if (auto newScheme = qApp->styleHints()->colorScheme();
-                    newScheme != Qt::ColorScheme::Unknown)
-                    m_config.colorScheme = newScheme;
-
-                emit colorSchemeChanged();
+                // Only emit if mode is set to Auto (unknown)
+                if (m_config.colorScheme == Qt::ColorScheme::Unknown)
+                    emit colorSchemeChanged();
             });
 }
 
@@ -181,10 +180,8 @@ void Theme::setLuminanceThreshold(float luminanceThreshold) {
         emit luminanceThresholdChanged();
     }
 }
-
 void Theme::setColorScheme(Qt::ColorScheme colorScheme) {
-    if (m_config.colorScheme != colorScheme &&
-        colorScheme != Qt::ColorScheme::Unknown) {
+    if (m_config.colorScheme != colorScheme) {
         m_config.colorScheme = colorScheme;
         emit colorSchemeChanged();
     }

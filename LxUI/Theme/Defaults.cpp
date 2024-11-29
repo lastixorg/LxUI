@@ -20,11 +20,6 @@ QString Defaults::defaultWhite = "#ffffff";
 QString Defaults::defaultBlack = "#000000";
 QString Defaults::defaultPrimaryColor = "blue";
 PrimaryShade Defaults::defaultPrimaryShade = PrimaryShade();
-Qt::ColorScheme Defaults::defaultColorScheme =
-    qApp->styleHints()->colorScheme() != Qt::ColorScheme::Unknown ?
-        qApp->styleHints()->colorScheme() :
-        Qt::ColorScheme::Light; // if system color scheme is unknown, default to
-                                // light scheme
 
 QVariantMap Defaults::defaultColors = {
     {"dark",
