@@ -127,6 +127,7 @@ struct ThemeConfig {
             Qt::ColorScheme::Unknown; // Unknown for system theme
 };
 
+
 class Theme : public QObject {
         Q_OBJECT
 
@@ -139,6 +140,7 @@ class Theme : public QObject {
                        NOTIFY primaryColorChanged);
         Q_PROPERTY(PrimaryShade primaryShade READ primaryShade WRITE
                        setPrimaryShade NOTIFY primaryShadeChanged);
+
 
         // Typography
         Q_PROPERTY(float fontSize READ fontSize WRITE setFontSize NOTIFY
@@ -175,12 +177,28 @@ class Theme : public QObject {
         QVariantMap colors() const {
             return m_config.colors;
         }
+        Q_INVOKABLE QColor getColor(const QString &colorKey) const {
+            if (!m_config.colors.contains(colorKey)) { return QColor(); }
+
+            QVariantList colors = m_config.colors[colorKey].toList();
+            if (colors.isEmpty()) { return QColor(); }
+
+            int shadeIndex = (this->colorScheme() == Qt::ColorScheme::Dark) ?
+                                 m_config.primaryShade.dark() :
+                                 m_config.primaryShade.light();
+            // cyclic indexing
+            shadeIndex = ((shadeIndex % colors.size()) + colors.size()) %
+                         colors.size();
+
+            return colors[shadeIndex].value<QColor>();
+        }
         QString primaryColor() const {
             return m_config.primaryColor;
         }
         PrimaryShade primaryShade() const {
             return m_config.primaryShade;
         }
+
 
         // Typography
         float fontSize() const {
@@ -267,6 +285,7 @@ class Theme : public QObject {
         void luminanceThresholdChanged();
         void colorSchemeChanged();
 
+
     private:
         ThemeConfig m_config{};
 };
@@ -312,4 +331,71 @@ struct ThemeProvider {
 
         inline static Theme *s_instance = nullptr;
         inline static QJSEngine *s_engine = nullptr;
+};
+
+class ColorHelper : public QObject {
+        Q_OBJECT
+        QML_ELEMENT
+        Q_PROPERTY(QString colorKey READ colorKey WRITE setColorKey NOTIFY
+                       colorKeyChanged);
+        Q_PROPERTY(QColor color READ color NOTIFY colorChanged);
+
+    public:
+        explicit ColorHelper(QObject *parent = nullptr);
+
+        QString colorKey() const {
+            return m_colorKey;
+        }
+        void setColorKey(const QString &key) {
+            if (m_colorKey != key) {
+                m_colorKey = key;
+                emit colorKeyChanged();
+                updateColor();
+            }
+        }
+
+        QColor color() const {
+            return m_color;
+        }
+
+    signals:
+        void colorKeyChanged();
+        void colorChanged();
+
+    private slots:
+        void updateColor() {
+            if (!ThemeProvider::instance()) return;
+
+            auto theme = ThemeProvider::instance();
+
+            m_color = theme->getColor(m_colorKey);
+            emit colorChanged();
+        }
+
+    private:
+        QString m_colorKey;
+        QColor m_color;
+};
+
+class ColorHelperCache : public QObject {
+        Q_OBJECT
+        QML_ELEMENT
+        QML_SINGLETON
+
+    public:
+        explicit ColorHelperCache(QObject *parent = nullptr) : QObject(parent) {
+        }
+
+        Q_INVOKABLE ColorHelper *getColorHelper(const QString &colorKey) {
+            if (!m_cache.contains(colorKey)) {
+                auto helper = new ColorHelper(this);
+                helper->setColorKey(colorKey);
+                m_cache[colorKey] = helper;
+            }
+            return m_cache[colorKey];
+        }
+
+
+    private:
+        QMap<QString, ColorHelper *> m_cache;
 };

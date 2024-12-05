@@ -28,11 +28,12 @@ Theme::Theme(QObject *parent) : QObject(parent) {
     connect(qApp->styleHints(), &QStyleHints::colorSchemeChanged, this,
             [this]() {
                 // Only emit if mode is set to Auto (unknown)
-                if (m_config.colorScheme == Qt::ColorScheme::Unknown)
+                if (m_config.colorScheme == Qt::ColorScheme::Unknown) {
+
                     emit colorSchemeChanged();
+                }
             });
 }
-
 
 // Color palette
 void Theme::setWhite(const QString &white) {
@@ -184,5 +185,16 @@ void Theme::setColorScheme(Qt::ColorScheme colorScheme) {
     if (m_config.colorScheme != colorScheme) {
         m_config.colorScheme = colorScheme;
         emit colorSchemeChanged();
+    }
+}
+
+ColorHelper::ColorHelper(QObject *parent) : QObject(parent) {
+
+    if (auto theme = ThemeProvider::instance()) {
+        connect(theme, &Theme::colorSchemeChanged, this,
+                &ColorHelper::updateColor);
+
+        connect(theme, &Theme::primaryShadeChanged, this,
+                &ColorHelper::updateColor);
     }
 }
