@@ -177,7 +177,7 @@ class Theme : public QObject {
         QVariantMap colors() const {
             return m_config.colors;
         }
-        Q_INVOKABLE QColor getColor(const QString &colorKey) const {
+        Q_INVOKABLE QColor getColorValue(const QString &colorKey) const {
             if (!m_config.colors.contains(colorKey)) { return QColor(); }
 
             QVariantList colors = m_config.colors[colorKey].toList();
@@ -192,6 +192,21 @@ class Theme : public QObject {
 
             return colors[shadeIndex].value<QColor>();
         }
+        Q_INVOKABLE QColor getColorValue(const QString &colorKey,
+                                         int shade) const {
+            if (!m_config.colors.contains(colorKey)) { return QColor(); }
+
+            QVariantList colors = m_config.colors[colorKey].toList();
+            if (colors.isEmpty()) { return QColor(); }
+
+            int shadeIndex = shade;
+            // cyclic indexing
+            shadeIndex = ((shadeIndex % colors.size()) + colors.size()) %
+                         colors.size();
+
+            return colors[shadeIndex].value<QColor>();
+        }
+
         QString primaryColor() const {
             return m_config.primaryColor;
         }
@@ -368,7 +383,7 @@ class ColorHelper : public QObject {
 
             auto theme = ThemeProvider::instance();
 
-            m_color = theme->getColor(m_colorKey);
+            m_color = theme->getColorValue(m_colorKey);
             emit colorChanged();
         }
 
