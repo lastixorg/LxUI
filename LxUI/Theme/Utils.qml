@@ -4,7 +4,7 @@ import QtQuick
 QtObject {
     function getColor(colorKey, shade){
         if(!shade){
-            return ColorHelperCache.getColorHelper(colorKey).color
+            return Theme.getColorHelper(colorKey).color
         }
         else{
             return Theme.getColorValue(colorKey, shade)

@@ -40,12 +40,15 @@ Theme::Theme(QObject *parent) : QObject(parent) {
 QString Theme::white() const {
     return m_config.white;
 }
+
 QString Theme::black() const {
     return m_config.black;
 }
+
 QVariantMap Theme::colors() const {
     return m_config.colors;
 }
+
 QColor Theme::getColorValue(const QString &colorKey) const {
     if (!m_config.colors.contains(colorKey)) return QColor();
 
@@ -60,6 +63,7 @@ QColor Theme::getColorValue(const QString &colorKey) const {
 
     return colors[shadeIndex].value<QColor>();
 }
+
 QColor Theme::getColorValue(const QString &colorKey, int shade) const {
     if (!m_config.colors.contains(colorKey)) return QColor();
 
@@ -72,9 +76,20 @@ QColor Theme::getColorValue(const QString &colorKey, int shade) const {
 
     return colors[shadeIndex].value<QColor>();
 }
+
+ColorHelper *Theme::getColorHelper(const QString &colorKey) {
+    if (!m_colorHelpercache.contains(colorKey)) {
+        auto helper = new ColorHelper(this);
+        helper->setColorKey(colorKey);
+        m_colorHelpercache[colorKey] = helper;
+    }
+    return m_colorHelpercache[colorKey];
+}
+
 QString Theme::primaryColor() const {
     return m_config.primaryColor;
 }
+
 PrimaryShade Theme::primaryShade() const {
     return m_config.primaryShade;
 }
@@ -83,9 +98,11 @@ PrimaryShade Theme::primaryShade() const {
 float Theme::fontSize() const {
     return m_config.fontSize;
 }
+
 QVariantMap Theme::fontSizes() const {
     return m_config.fontSizes;
 }
+
 QVariantMap Theme::lineHeights() const {
     return m_config.lineHeights;
 }
@@ -94,6 +111,7 @@ QVariantMap Theme::lineHeights() const {
 QVariantMap Theme::radius() const {
     return m_config.radius;
 }
+
 QString Theme::defaultRadius() const {
     return m_config.defaultRadius;
 }
@@ -102,9 +120,11 @@ QString Theme::defaultRadius() const {
 bool Theme::autoContrast() const {
     return m_config.autoContrast;
 }
+
 float Theme::luminanceThreshold() const {
     return m_config.luminanceThreshold;
 }
+
 Qt::ColorScheme Theme::colorScheme() const {
     if (m_config.colorScheme != Qt::ColorScheme::Unknown) {
         return m_config.colorScheme;
@@ -125,12 +145,14 @@ void Theme::setWhite(const QString &white) {
         emit whiteChanged();
     }
 }
+
 void Theme::setBlack(const QString &black) {
     if (m_config.black != black) {
         m_config.black = black;
         emit blackChanged();
     }
 }
+
 void Theme::setColors(const QVariantMap &colors) {
     QVariantMap newColors = m_config.colors;
 
@@ -192,6 +214,7 @@ void Theme::setColors(const QVariantMap &colors) {
         qWarning() << "Colors were not set due to validation errors.";
     }
 }
+
 void Theme::setPrimaryColor(const QString &primaryColor) {
     if (m_config.primaryColor != primaryColor) {
         if (!m_config.colors.contains(primaryColor)) {
@@ -203,6 +226,7 @@ void Theme::setPrimaryColor(const QString &primaryColor) {
         emit primaryColorChanged();
     }
 }
+
 void Theme::setPrimaryShade(const PrimaryShade &primaryShade) {
     if (m_config.primaryShade.light() != primaryShade.light() ||
         m_config.primaryShade.dark() != primaryShade.dark()) {
@@ -218,12 +242,14 @@ void Theme::setFontSize(const float fontSize) {
         emit fontSizeChanged();
     }
 }
+
 void Theme::setFontSizes(const QVariantMap &fontSizes) {
     if (m_config.fontSizes != fontSizes) {
         m_config.fontSizes = fontSizes;
         emit fontSizesChanged();
     }
 }
+
 void Theme::setLineHeights(const QVariantMap &lineHeights) {
     if (m_config.lineHeights != lineHeights) {
         m_config.lineHeights = lineHeights;
@@ -238,6 +264,7 @@ void Theme::setRadius(const QVariantMap &radius) {
         emit radiusChanged();
     }
 }
+
 void Theme::setDefaultRadius(const Size &defaultRadius) {
     if (m_config.defaultRadius != defaultRadius) {
         m_config.defaultRadius = defaultRadius;
@@ -252,12 +279,14 @@ void Theme::setAutoContrast(bool autoContrast) {
         emit autoContrastChanged();
     }
 }
+
 void Theme::setLuminanceThreshold(float luminanceThreshold) {
     if (m_config.luminanceThreshold != luminanceThreshold) {
         m_config.luminanceThreshold = luminanceThreshold;
         emit luminanceThresholdChanged();
     }
 }
+
 void Theme::setColorScheme(Qt::ColorScheme colorScheme) {
     if (m_config.colorScheme != colorScheme) {
         m_config.colorScheme = colorScheme;
@@ -314,6 +343,7 @@ ColorHelper::ColorHelper(QObject *parent) : QObject(parent) {
 QString ColorHelper::colorKey() const {
     return m_colorKey;
 }
+
 QColor ColorHelper::color() const {
     return m_color;
 }
@@ -326,6 +356,7 @@ void ColorHelper::setColorKey(const QString &key) {
         updateColor();
     }
 }
+
 void ColorHelper::updateColor() {
     if (!ThemeProvider::instance()) return;
 
@@ -333,17 +364,4 @@ void ColorHelper::updateColor() {
 
     m_color = theme->getColorValue(m_colorKey);
     emit colorChanged();
-}
-
-
-// COLOR HELPER CACHE
-ColorHelperCache::ColorHelperCache(QObject *parent) : QObject(parent) {
-}
-ColorHelper *ColorHelperCache::getColorHelper(const QString &colorKey) {
-    if (!m_cache.contains(colorKey)) {
-        auto helper = new ColorHelper(this);
-        helper->setColorKey(colorKey);
-        m_cache[colorKey] = helper;
-    }
-    return m_cache[colorKey];
 }

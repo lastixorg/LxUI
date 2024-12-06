@@ -127,7 +127,7 @@ struct ThemeConfig {
             Qt::ColorScheme::Unknown; // Unknown for system theme
 };
 
-
+class ColorHelper;
 class Theme : public QObject {
         Q_OBJECT
 
@@ -175,6 +175,7 @@ class Theme : public QObject {
         Q_INVOKABLE QColor getColorValue(const QString &colorKey) const;
         Q_INVOKABLE QColor getColorValue(const QString &colorKey,
                                          int shade) const;
+        Q_INVOKABLE ColorHelper *getColorHelper(const QString &colorKey);
         QString primaryColor() const;
         PrimaryShade primaryShade() const;
 
@@ -240,6 +241,7 @@ class Theme : public QObject {
 
     private:
         ThemeConfig m_config{};
+        QMap<QString, ColorHelper *> m_colorHelpercache;
 };
 
 struct ThemeProvider {
@@ -286,18 +288,4 @@ class ColorHelper : public QObject {
     private:
         QString m_colorKey;
         QColor m_color;
-};
-
-class ColorHelperCache : public QObject {
-        Q_OBJECT
-        QML_ELEMENT
-        QML_SINGLETON
-
-    public:
-        explicit ColorHelperCache(QObject *parent = nullptr);
-
-        Q_INVOKABLE ColorHelper *getColorHelper(const QString &colorKey);
-
-    private:
-        QMap<QString, ColorHelper *> m_cache;
 };
