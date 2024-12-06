@@ -167,92 +167,30 @@ class Theme : public QObject {
     public:
         explicit Theme(QObject *parent, const ThemeConfig &config);
         explicit Theme(QObject *parent);
+
         // Color palette
-        QString white() const {
-            return m_config.white;
-        }
-        QString black() const {
-            return m_config.black;
-        }
-        QVariantMap colors() const {
-            return m_config.colors;
-        }
-        Q_INVOKABLE QColor getColorValue(const QString &colorKey) const {
-            if (!m_config.colors.contains(colorKey)) { return QColor(); }
-
-            QVariantList colors = m_config.colors[colorKey].toList();
-            if (colors.isEmpty()) { return QColor(); }
-
-            int shadeIndex = (this->colorScheme() == Qt::ColorScheme::Dark) ?
-                                 m_config.primaryShade.dark() :
-                                 m_config.primaryShade.light();
-            // cyclic indexing
-            shadeIndex = ((shadeIndex % colors.size()) + colors.size()) %
-                         colors.size();
-
-            return colors[shadeIndex].value<QColor>();
-        }
+        QString white() const;
+        QString black() const;
+        QVariantMap colors() const;
+        Q_INVOKABLE QColor getColorValue(const QString &colorKey) const;
         Q_INVOKABLE QColor getColorValue(const QString &colorKey,
-                                         int shade) const {
-            if (!m_config.colors.contains(colorKey)) { return QColor(); }
-
-            QVariantList colors = m_config.colors[colorKey].toList();
-            if (colors.isEmpty()) { return QColor(); }
-
-            int shadeIndex = shade;
-            // cyclic indexing
-            shadeIndex = ((shadeIndex % colors.size()) + colors.size()) %
-                         colors.size();
-
-            return colors[shadeIndex].value<QColor>();
-        }
-
-        QString primaryColor() const {
-            return m_config.primaryColor;
-        }
-        PrimaryShade primaryShade() const {
-            return m_config.primaryShade;
-        }
-
+                                         int shade) const;
+        QString primaryColor() const;
+        PrimaryShade primaryShade() const;
 
         // Typography
-        float fontSize() const {
-            return m_config.fontSize;
-        }
-        QVariantMap fontSizes() const {
-            return m_config.fontSizes;
-        }
-        QVariantMap lineHeights() const {
-            return m_config.lineHeights;
-        }
+        float fontSize() const;
+        QVariantMap fontSizes() const;
+        QVariantMap lineHeights() const;
 
         // Radius
-        QVariantMap radius() const {
-            return m_config.radius;
-        }
-        QString defaultRadius() const {
-            return m_config.defaultRadius;
-        }
+        QVariantMap radius() const;
+        QString defaultRadius() const;
 
         // Contrast
-        bool autoContrast() const {
-            return m_config.autoContrast;
-        }
-        float luminanceThreshold() const {
-            return m_config.luminanceThreshold;
-        }
-        Qt::ColorScheme colorScheme() const {
-            if (m_config.colorScheme != Qt::ColorScheme::Unknown) {
-                return m_config.colorScheme;
-            } else {
-                // Use system color scheme or default to Light if unknown
-                if (auto systemScheme = qApp->styleHints()->colorScheme();
-                    systemScheme != Qt::ColorScheme::Unknown)
-                    return systemScheme;
-                return Qt::ColorScheme::Light;
-            }
-        }
-
+        bool autoContrast() const;
+        float luminanceThreshold() const;
+        Qt::ColorScheme colorScheme() const;
 
     public slots:
 
@@ -300,49 +238,24 @@ class Theme : public QObject {
         void luminanceThresholdChanged();
         void colorSchemeChanged();
 
-
     private:
         ThemeConfig m_config{};
 };
 
 struct ThemeProvider {
         Q_GADGET
-        QML_FOREIGN(Theme)
+        QML_FOREIGN(Theme);
         QML_SINGLETON
-        QML_NAMED_ELEMENT(Theme)
+        QML_NAMED_ELEMENT(Theme);
+
     public:
-        static Theme *instance() {
-            if (!s_instance) qFatal("Theme not initialized!");
-
-            return s_instance;
-        }
-        static Theme *init(QObject *parent, const ThemeConfig &config) {
-            return creator(parent, &config);
-        }
-
-        static Theme *init(QObject *parent) {
-            return creator(parent, nullptr);
-        }
-
-        static Theme *create(QQmlEngine *, QJSEngine *engine) {
-            auto instance = ThemeProvider::instance();
-
-            Q_ASSERT(engine->thread() == s_instance->thread());
-
-            if (s_engine) Q_ASSERT(engine == s_engine);
-            else s_engine = engine;
-
-            QJSEngine::setObjectOwnership(s_instance, QJSEngine::CppOwnership);
-            return instance;
-        }
+        static Theme *instance();
+        static Theme *init(QObject *parent, const ThemeConfig &config);
+        static Theme *init(QObject *parent);
+        static Theme *create(QQmlEngine *, QJSEngine *engine);
 
     private:
-        static Theme *creator(QObject *parent, const ThemeConfig *config) {
-            if (s_instance) qFatal("Theme already initialized!");
-            s_instance = config ? new Theme(parent, *config) :
-                                  new Theme(parent);
-            return s_instance;
-        }
+        static Theme *creator(QObject *parent, const ThemeConfig *config);
 
         inline static Theme *s_instance = nullptr;
         inline static QJSEngine *s_engine = nullptr;
@@ -358,34 +271,17 @@ class ColorHelper : public QObject {
     public:
         explicit ColorHelper(QObject *parent = nullptr);
 
-        QString colorKey() const {
-            return m_colorKey;
-        }
-        void setColorKey(const QString &key) {
-            if (m_colorKey != key) {
-                m_colorKey = key;
-                emit colorKeyChanged();
-                updateColor();
-            }
-        }
+        QString colorKey() const;
+        void setColorKey(const QString &key);
 
-        QColor color() const {
-            return m_color;
-        }
+        QColor color() const;
 
     signals:
         void colorKeyChanged();
         void colorChanged();
 
     private slots:
-        void updateColor() {
-            if (!ThemeProvider::instance()) return;
-
-            auto theme = ThemeProvider::instance();
-
-            m_color = theme->getColorValue(m_colorKey);
-            emit colorChanged();
-        }
+        void updateColor();
 
     private:
         QString m_colorKey;
@@ -398,18 +294,9 @@ class ColorHelperCache : public QObject {
         QML_SINGLETON
 
     public:
-        explicit ColorHelperCache(QObject *parent = nullptr) : QObject(parent) {
-        }
+        explicit ColorHelperCache(QObject *parent = nullptr);
 
-        Q_INVOKABLE ColorHelper *getColorHelper(const QString &colorKey) {
-            if (!m_cache.contains(colorKey)) {
-                auto helper = new ColorHelper(this);
-                helper->setColorKey(colorKey);
-                m_cache[colorKey] = helper;
-            }
-            return m_cache[colorKey];
-        }
-
+        Q_INVOKABLE ColorHelper *getColorHelper(const QString &colorKey);
 
     private:
         QMap<QString, ColorHelper *> m_cache;

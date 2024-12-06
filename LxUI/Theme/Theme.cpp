@@ -1,5 +1,6 @@
 #include "Theme.hpp"
 
+// THEME
 Theme::Theme(QObject *parent, const ThemeConfig &config) : Theme(parent) {
     // Color palette
     setWhite(config.white);
@@ -29,15 +30,96 @@ Theme::Theme(QObject *parent) : QObject(parent) {
             [this]() {
                 // Only emit if mode is set to Auto (unknown)
                 if (m_config.colorScheme == Qt::ColorScheme::Unknown) {
-
                     emit colorSchemeChanged();
                 }
             });
 }
 
+// **** THEME GETTERS ****
+// Color palette
+QString Theme::white() const {
+    return m_config.white;
+}
+QString Theme::black() const {
+    return m_config.black;
+}
+QVariantMap Theme::colors() const {
+    return m_config.colors;
+}
+QColor Theme::getColorValue(const QString &colorKey) const {
+    if (!m_config.colors.contains(colorKey)) return QColor();
+
+    QVariantList colors = m_config.colors[colorKey].toList();
+    if (colors.isEmpty()) return QColor();
+
+    int shadeIndex = (this->colorScheme() == Qt::ColorScheme::Dark) ?
+                         m_config.primaryShade.dark() :
+                         m_config.primaryShade.light();
+    // cyclic indexing
+    shadeIndex = ((shadeIndex % colors.size()) + colors.size()) % colors.size();
+
+    return colors[shadeIndex].value<QColor>();
+}
+QColor Theme::getColorValue(const QString &colorKey, int shade) const {
+    if (!m_config.colors.contains(colorKey)) return QColor();
+
+    QVariantList colors = m_config.colors[colorKey].toList();
+    if (colors.isEmpty()) return QColor();
+
+    int shadeIndex = shade;
+    // cyclic indexing
+    shadeIndex = ((shadeIndex % colors.size()) + colors.size()) % colors.size();
+
+    return colors[shadeIndex].value<QColor>();
+}
+QString Theme::primaryColor() const {
+    return m_config.primaryColor;
+}
+PrimaryShade Theme::primaryShade() const {
+    return m_config.primaryShade;
+}
+
+// Typographu
+float Theme::fontSize() const {
+    return m_config.fontSize;
+}
+QVariantMap Theme::fontSizes() const {
+    return m_config.fontSizes;
+}
+QVariantMap Theme::lineHeights() const {
+    return m_config.lineHeights;
+}
+
+// Radius
+QVariantMap Theme::radius() const {
+    return m_config.radius;
+}
+QString Theme::defaultRadius() const {
+    return m_config.defaultRadius;
+}
+
+// Contrast
+bool Theme::autoContrast() const {
+    return m_config.autoContrast;
+}
+float Theme::luminanceThreshold() const {
+    return m_config.luminanceThreshold;
+}
+Qt::ColorScheme Theme::colorScheme() const {
+    if (m_config.colorScheme != Qt::ColorScheme::Unknown) {
+        return m_config.colorScheme;
+    } else {
+        // Use system color scheme or default to Light if unknown
+        if (auto systemScheme = qApp->styleHints()->colorScheme();
+            systemScheme != Qt::ColorScheme::Unknown)
+            return systemScheme;
+        return Qt::ColorScheme::Light;
+    }
+}
+
+// **** THEME SETTERS ****
 // Color palette
 void Theme::setWhite(const QString &white) {
-
     if (m_config.white != white) {
         m_config.white = white;
         emit whiteChanged();
@@ -110,8 +192,6 @@ void Theme::setColors(const QVariantMap &colors) {
         qWarning() << "Colors were not set due to validation errors.";
     }
 }
-
-
 void Theme::setPrimaryColor(const QString &primaryColor) {
     if (m_config.primaryColor != primaryColor) {
         if (!m_config.colors.contains(primaryColor)) {
@@ -130,7 +210,6 @@ void Theme::setPrimaryShade(const PrimaryShade &primaryShade) {
         emit primaryShadeChanged();
     }
 }
-
 
 // Typography
 void Theme::setFontSize(const float fontSize) {
@@ -152,7 +231,6 @@ void Theme::setLineHeights(const QVariantMap &lineHeights) {
     }
 }
 
-
 // Radius
 void Theme::setRadius(const QVariantMap &radius) {
     if (m_config.radius != radius) {
@@ -166,7 +244,6 @@ void Theme::setDefaultRadius(const Size &defaultRadius) {
         emit defaultRadiusChanged();
     }
 }
-
 
 // Contrast
 void Theme::setAutoContrast(bool autoContrast) {
@@ -188,13 +265,85 @@ void Theme::setColorScheme(Qt::ColorScheme colorScheme) {
     }
 }
 
-ColorHelper::ColorHelper(QObject *parent) : QObject(parent) {
 
+// THEME PROVIDER
+Theme *ThemeProvider::instance() {
+    if (!s_instance) qFatal("Theme not initialized!");
+
+    return s_instance;
+}
+
+Theme *ThemeProvider::init(QObject *parent, const ThemeConfig &config) {
+    return creator(parent, &config);
+}
+
+Theme *ThemeProvider::init(QObject *parent) {
+    return creator(parent, nullptr);
+}
+
+Theme *ThemeProvider::create(QQmlEngine *, QJSEngine *engine) {
+    auto instance = ThemeProvider::instance();
+
+    Q_ASSERT(engine->thread() == s_instance->thread());
+
+    if (s_engine) Q_ASSERT(engine == s_engine);
+    else s_engine = engine;
+
+    QJSEngine::setObjectOwnership(s_instance, QJSEngine::CppOwnership);
+    return instance;
+}
+
+Theme *ThemeProvider::creator(QObject *parent, const ThemeConfig *config) {
+    if (s_instance) qFatal("Theme already initialized!");
+    s_instance = config ? new Theme(parent, *config) : new Theme(parent);
+    return s_instance;
+}
+
+
+// COLOR HELPER
+ColorHelper::ColorHelper(QObject *parent) : QObject(parent) {
     if (auto theme = ThemeProvider::instance()) {
         connect(theme, &Theme::colorSchemeChanged, this,
                 &ColorHelper::updateColor);
-
         connect(theme, &Theme::primaryShadeChanged, this,
                 &ColorHelper::updateColor);
     }
+}
+
+// **** COLOR HELPER GETTERS ****
+QString ColorHelper::colorKey() const {
+    return m_colorKey;
+}
+QColor ColorHelper::color() const {
+    return m_color;
+}
+
+// **** COLOR HELPER SETTERS ****
+void ColorHelper::setColorKey(const QString &key) {
+    if (m_colorKey != key) {
+        m_colorKey = key;
+        emit colorKeyChanged();
+        updateColor();
+    }
+}
+void ColorHelper::updateColor() {
+    if (!ThemeProvider::instance()) return;
+
+    auto theme = ThemeProvider::instance();
+
+    m_color = theme->getColorValue(m_colorKey);
+    emit colorChanged();
+}
+
+
+// COLOR HELPER CACHE
+ColorHelperCache::ColorHelperCache(QObject *parent) : QObject(parent) {
+}
+ColorHelper *ColorHelperCache::getColorHelper(const QString &colorKey) {
+    if (!m_cache.contains(colorKey)) {
+        auto helper = new ColorHelper(this);
+        helper->setColorKey(colorKey);
+        m_cache[colorKey] = helper;
+    }
+    return m_cache[colorKey];
 }
