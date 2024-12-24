@@ -14,8 +14,8 @@
 #include <QColor>
 #include <QStyleHints>
 #include <QGuiApplication>
-
-
+#include <QFontDatabase>
+#include <QFile>
 class PrimaryShade {
         Q_GADGET
 
@@ -109,6 +109,10 @@ struct ThemeConfig {
 
         // Typography
         float fontSize = 14.0;
+        QString fontFamily =
+            ":/lastix/LxUI/Theme/fonts/Inter-VariableFont_opsz,wght.ttf";
+        QString fontFamilyMonospace =
+            ":/lastix/LxUI/Theme/fonts/NotoSansMono-VariableFont_wdth,wght.ttf";
         QVariantMap fontSizes = {{Size::xs(), fontSize * 0.857},
                                  {Size::sm(), fontSize},
                                  {Size::md(), fontSize * 1.143},
@@ -128,6 +132,7 @@ struct ThemeConfig {
 };
 
 class ColorHelper;
+
 class Theme : public QObject {
         Q_OBJECT
 
@@ -145,6 +150,11 @@ class Theme : public QObject {
         // Typography
         Q_PROPERTY(float fontSize READ fontSize WRITE setFontSize NOTIFY
                        fontSizeChanged);
+        Q_PROPERTY(QString fontFamily READ fontFamily WRITE setFontFamily NOTIFY
+                       fontFamilyChanged);
+        Q_PROPERTY(
+            QString fontFamilyMonospace READ fontFamilyMonospace WRITE
+                setFontFamilyMonospace NOTIFY fontFamilyMonospaceChanged);
         Q_PROPERTY(QVariantMap fontSizes READ fontSizes WRITE setFontSizes
                        NOTIFY fontSizesChanged);
         Q_PROPERTY(QVariantMap lineHeights READ lineHeights WRITE setLineHeights
@@ -181,6 +191,8 @@ class Theme : public QObject {
 
         // Typography
         float fontSize() const;
+        QString fontFamily() const;
+        QString fontFamilyMonospace() const;
         QVariantMap fontSizes() const;
         QVariantMap lineHeights() const;
 
@@ -204,6 +216,8 @@ class Theme : public QObject {
 
         // Typography
         void setFontSize(const float fontSize);
+        void setFontFamily(const QString &fontFamily);
+        void setFontFamilyMonospace(const QString &fontFamilyMonospace);
         void setFontSizes(const QVariantMap &fontSizes);
         void setLineHeights(const QVariantMap &lineHeights);
 
@@ -227,6 +241,8 @@ class Theme : public QObject {
 
         // Typography
         void fontSizeChanged();
+        void fontFamilyChanged();
+        void fontFamilyMonospaceChanged();
         void fontSizesChanged();
         void lineHeightsChanged();
 
@@ -242,6 +258,9 @@ class Theme : public QObject {
     private:
         ThemeConfig m_config{};
         QMap<QString, ColorHelper *> m_colorHelpercache;
+        QString m_fontFamilyPath;
+        QString m_fontFamilyMonospacePath;
+        QString addFont(const QString &path);
 };
 
 struct ThemeProvider {

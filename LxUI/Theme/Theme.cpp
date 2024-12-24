@@ -11,6 +11,8 @@ Theme::Theme(QObject *parent, const ThemeConfig &config) : Theme(parent) {
 
     // Typography
     setFontSize(config.fontSize);
+    setFontFamily(config.fontFamily);
+    setFontFamilyMonospace(config.fontFamilyMonospace);
     setFontSizes(config.fontSizes);
     setLineHeights(config.lineHeights);
 
@@ -34,6 +36,7 @@ Theme::Theme(QObject *parent) : QObject(parent) {
                 }
             });
 }
+
 
 // **** THEME GETTERS ****
 // Color palette
@@ -94,9 +97,17 @@ PrimaryShade Theme::primaryShade() const {
     return m_config.primaryShade;
 }
 
-// Typographu
+// Typography
 float Theme::fontSize() const {
     return m_config.fontSize;
+}
+
+QString Theme::fontFamily() const {
+    return m_config.fontFamily;
+}
+
+QString Theme::fontFamilyMonospace() const {
+    return m_config.fontFamilyMonospace;
 }
 
 QVariantMap Theme::fontSizes() const {
@@ -236,10 +247,58 @@ void Theme::setPrimaryShade(const PrimaryShade &primaryShade) {
 }
 
 // Typography
+QString Theme::addFont(const QString &path) {
+    if (!QFile::exists(path)) {
+        qWarning() << "Font file does not exist: " << path;
+        return qApp->font().family();
+    }
+
+    int fontId = QFontDatabase::addApplicationFont(path);
+
+    if (fontId == -1) {
+        qWarning() << "Failed to load font from path:" << path;
+        return qApp->font().family();
+    } else {
+
+        QStringList families = QFontDatabase::applicationFontFamilies(fontId);
+        if (families.isEmpty()) {
+            qWarning() << "No font families found in font file:" << path;
+            return qApp->font().family();
+        }
+        return families.at(0);
+    }
+}
+
 void Theme::setFontSize(const float fontSize) {
     if (m_config.fontSize != fontSize) {
         m_config.fontSize = fontSize;
         emit fontSizeChanged();
+    }
+}
+// NOTE: User must explicitly specify font.family in QML if font family
+// changes need to be reactive.
+void Theme::setFontFamily(const QString &fontFamily) {
+    if (m_fontFamilyPath != fontFamily) {
+        QString family = addFont(fontFamily);
+        if (m_config.fontFamily != family) {
+
+            QFont font(family);
+            qApp->setFont(font);
+
+            m_config.fontFamily = family;
+            emit fontFamilyChanged();
+        }
+    }
+}
+
+void Theme::setFontFamilyMonospace(const QString &fontFamilyMonospace) {
+    if (m_fontFamilyMonospacePath != fontFamilyMonospace) {
+        QString family = addFont(fontFamilyMonospace);
+
+        if (m_config.fontFamilyMonospace != family) {
+            m_config.fontFamilyMonospace = family;
+            emit fontFamilyMonospaceChanged();
+        }
     }
 }
 

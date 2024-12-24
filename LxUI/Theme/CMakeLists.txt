@@ -15,6 +15,9 @@ qt_add_qml_module(LxUITheme STATIC
         QtGui
         QtQuick
         QtCore
+    RESOURCES
+        fonts/Inter-VariableFont_opsz,wght.ttf
+        fonts/NotoSansMono-VariableFont_wdth,wght.ttf
 )
 
 
